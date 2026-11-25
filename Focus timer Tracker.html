@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Make Room for Focus — Daily Routine Tracker</title>
+<style>
+:root{--bg:#f4f5f3;--ink:#17211d;--muted:#748078;--line:#dce2dd;--green:#65b99a;--green2:#267b60;--orange:#d69b78;--panel:#050706}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,Segoe UI,Arial,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff}
+.brand{font-weight:750;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.12em}
+header .date{color:var(--muted);font-size:13px}
+.mission{margin:14px 18px 0;padding:12px 16px;background:#d9f0e7;border-radius:10px;font-weight:700;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mission input{border:0;background:transparent;font:inherit;font-weight:700;min-width:70px;color:inherit;outline:none}.mission input:read-only{cursor:default}.mission button{padding:6px 10px;font-size:12px}.mission .goal{width:110px}.mission .days{width:58px}.mission .dateedit{width:115px}
+main{display:grid;grid-template-columns:minmax(340px, .92fr) minmax(420px,1.08fr);gap:16px;padding:16px 18px;height:calc(100vh - 132px);min-height:620px}
+.left,.right{min-height:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.left{display:flex;flex-direction:column}.lefttop{padding:16px;border-bottom:1px solid var(--line)}
+.lefttop h2{margin:0 0 3px;font-size:18px}.sub{color:var(--muted);font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:8px 11px;font-weight:650;cursor:pointer}
+button:hover{border-color:#9eb8aa;background:#f7fbf8}button.primary{background:#267b60;color:white;border-color:#267b60}button.finish-ready{background:#e2bd55!important;color:#17211d!important;border:2px solid #b78e25!important;font-weight:900!important;box-shadow:0 0 0 3px #e2bd5530}button.finish-small{background:#e4f4eb;color:#176343;border:1px solid #69ad88;font-weight:800}button.finish-small:disabled{background:#f3f5f3;color:#a0aaa3;border-color:#e1e6e2}button.small{padding:5px 8px;font-size:12px}button:disabled{opacity:.45;cursor:not-allowed}
+.tasklist{overflow:auto;padding:10px;flex:1}
+.task{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px}
+.task.active{border:1.5px solid var(--green2);background:#f0faf5}.task.done{opacity:1;background:#dff4e9;border:2px solid #267b60}.task.done .taskname{font-weight:850;color:#145b43}.task.done .meta{color:#267b60;font-weight:750}
+.num{width:27px;height:27px;border-radius:50%;background:#edf1ee;display:grid;place-items:center;font-size:12px;color:#607168;font-weight:700}
+.taskname{font-weight:700;font-size:14px}.meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}.taskbtns{display:flex;gap:5px;align-items:center}.taskbtns button{font-size:12px;padding:6px 9px}
+.backup-time{width:112px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#f7faf8;color:var(--ink);font:inherit;font-size:13px;font-weight:650}
+.right{background:var(--panel);color:#e8eee9;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;text-align:center}
+.status{font-size:11px;letter-spacing:.2em;color:#9aa69f;margin-bottom:10px}.workname{font-size:clamp(18px,2.2vw,28px);font-weight:750;color:var(--green);margin-bottom:18px;max-width:90%;overflow-wrap:anywhere}
+.ring{width:min( min( min( 58vh, 390px), 78vw), 390px);aspect-ratio:1;border:2px solid #4d987d;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 0 30px #1b49351a}
+.ring:before{content:"";position:absolute;inset:10px;border:1px solid #1c342a;border-radius:50%}
+.timer{font-size:clamp(42px,6vw,76px);font-weight:650;letter-spacing:-.045em;color:var(--green);font-variant-numeric:tabular-nums;z-index:1}
+.timerlabel{font-size:10px;letter-spacing:.2em;color:#8e9a93;margin-top:5px;z-index:1}
+.right.idle .ring{border-color:var(--orange)}.right.idle .timer,.right.idle .workname{color:var(--orange)}
+.right.complete .ring{border-color:#e5c77c}.right.complete .timer,.right.complete .workname{color:#e5c77c}
+.times{display:flex;gap:30px;margin-top:25px}.times div{min-width:100px}.times label{display:block;color:#89958e;font-size:9px;letter-spacing:.16em;margin-bottom:6px}.times strong{font-size:17px;font-weight:500}
+.panelbuttons{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap;justify-content:center;max-width:520px}.panelbuttons button{background:#111a15;color:#dbe6df;border-color:#344139}.panelbuttons button.primary{background:#267b60;border-color:#267b60;color:white}
+.footnote{position:absolute;bottom:12px;color:#637168;font-size:10px}
+.overlay{position:fixed;inset:0;background:#07100bcc;display:none;align-items:center;justify-content:center;padding:18px;z-index:5}.modal{background:white;color:var(--ink);padding:22px;border-radius:14px;width:min(440px,100%);box-shadow:0 20px 70px #0005}.modal h3{margin:0 0 15px}.modal label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}.modal input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit}.modal .row{display:flex;gap:10px}.modal .row>div{flex:1}.modalfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.scorebox{margin:12px 18px 0;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.scorebox strong{font-size:22px;color:var(--green2)}.scorebox .sub{max-width:650px}.history{padding:12px 18px 30px}.history h2{font-size:17px}.historybox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:250px;overflow:auto}.record{display:flex;justify-content:space-between;gap:10px;padding:8px;border-bottom:1px solid #edf0ed;font-size:13px}.record:last-child{border:0}
+@media(max-width:850px){main{grid-template-columns:1fr;height:auto;min-height:0}.left{height:580px}.right{min-height:620px}.ring{width:min(78vw,350px)}header{align-items:flex-start;flex-direction:column}.mission{margin:10px}.times{gap:15px}}
+</style>
+</head>
+<body>
+<header><div class="brand">MAKE ROOM FOR FOCUS<small>PERSONAL DAILY ROUTINE TRACKER</small></div><div class="date" id="today"></div></header>
+<div class="mission">
+  <span>MISSION</span><input id="missionText" value="90/52 – 38 Days Mission" readonly><span>GOAL</span><input class="goal" id="goal" value="₹5 Lakh" readonly><span>DATE</span><input class="dateedit" id="missionDate" type="date" readonly><span>DAYS</span><input class="days" id="dayGoal" type="number" min="1" max="365" value="40" readonly><button id="editMission">Edit Mission</button><button id="saveMission" class="primary" style="display:none">Save</button>
+</div>
+<section class="scorebox" id="dailyScore"><div><b>DAILY FOCUS SCORE</b><div class="sub" id="scoreNote">Your score will appear after all routine tasks are completed.</div></div><strong id="scoreValue">— / 100</strong></section>
+<main>
+<section class="left">
+ <div class="lefttop"><h2>Daily Routine</h2><div class="sub">Choose any task to start its timer. Your routine is saved in this browser.</div>
+ <div class="sub" id="dayProgress" style="margin-top:8px;font-weight:700">DAY 1 / 40 · Not started</div><div class="actions"><button class="primary" id="startDay">Start Day 1</button><button class="primary" id="addTask">＋ Add task</button><button id="resetDay">Reset today's status</button><button id="historyJump">History ↓</button></div></div>
+ <div class="tasklist" id="tasklist"></div>
+</section>
+<section class="right" id="timerPanel">
+ <div class="status" id="status">READY TO FOCUS</div><div class="workname" id="workname">Choose a task from your routine</div>
+ <div class="ring"><div class="timer" id="timer">00:00</div><div class="timerlabel" id="timerlabel">TIME REMAINING</div></div>
+ <div class="times"><div><label>START TIME</label><strong id="startTime">—</strong></div><div><label>END TIME</label><strong id="endTime">—</strong></div></div>
+ <div class="panelbuttons"><button id="finishTask">Finish task</button><button id="pauseTask">Stop</button><button id="resumeTask" class="primary" style="display:none">Start</button><button id="startIdle">Start Idle</button><button id="stopIdle" style="display:none">Stop this time</button></div>
+ <div class="footnote" id="footnote">Focus time is precious. Begin with one task.</div>
+</section>
+</main>
+<section class="history" id="history"><h2>Daily History & Time Records</h2><div class="scorebox" id="periodSummary" style="margin:0 0 12px"><div><b>PROGRESS SUMMARY</b><div class="sub" id="periodNote">Completed days will appear here.</div></div><strong id="periodValue">0 days</strong></div><div class="historybox" id="records"><div class="sub">No records yet. Completed tasks and idle intervals will appear here.</div></div><div class="actions"><button id="exportCsv">Export CSV</button><button id="exportJson">Backup JSON</button><button id="clearHistory">Clear history</button></div></section>
+<div class="overlay" id="dayOverlay"><div class="modal"><h3 id="dayModalTitle">Start your day</h3><div class="sub" id="dayModalNote">Aaj aap kitne baje jaage?</div><label id="dayTimeLabel">Wake-up time</label><input id="dayTimeInput" type="time" required><div class="modalfoot"><button id="cancelDay">Cancel</button><button class="primary" id="saveDay">Start Day</button></div></div></div>
+<div class="overlay" id="idleOverlay"><div class="modal"><h3>What did you do during this time?</h3><div class="sub" id="idleDuration"></div><label>Write what you did</label><textarea id="idleReason" rows="4" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;resize:vertical" placeholder="e.g. Went for a walk, had tea, family work..."></textarea><div class="modalfoot"><button id="cancelIdle">Cancel</button><button class="primary" id="saveIdle">Save time</button></div></div></div>
+<div class="overlay" id="overlay"><div class="modal"><h3 id="modalTitle">Add task</h3><label>Task name</label><input id="taskName" placeholder="e.g. English Reading"><div class="row"><div><label>Duration hours</label><input id="taskHours" type="number" min="0" value="0"></div><div><label>Duration minutes</label><input id="taskMinutes" type="number" min="0" max="59" value="20"></div></div><label><input id="stopwatch" type="checkbox" style="width:auto"> Stopwatch task (no fixed duration)</label><div class="modalfoot"><button id="cancelModal">Cancel</button><button class="primary" id="saveTask">Save task</button></div></div></div>
+<script>
+const defaults=[
+["Backup",null],["Make The Bed, Brush, Room Clean",7],["Meditation",10],["Goal Imagination",5],["Bathing",10],["Book Reading",20],["Work Income",40],["Fajr",10],["Work Season 1",240],["Breakfast",10],["Work Season 2",240],["Zhohr",15],["Work Season 3",120],["Asr Ki Namaz",5],["Work Season 4",90],["Maghrib",10],["Work Season 5",80],["Isha",15],["Bathing",10],["Dinner",10],["Work Season 6",60],["English Read",5],["Math Read",180],["Goal Imagination",5],["Today Check & Next Day Planning",8],["Sleep",240]
+];
+// Fixed schedule supplied for the daily routine. Durations remain independently visible.
+const schedule=[
+["4:00 AM",""],["4:00 AM","4:07 AM"],["4:07 AM","4:17 AM"],["4:17 AM","4:22 AM"],["4:22 AM","4:32 AM"],
+["4:32 AM","4:52 AM"],["4:52 AM","5:32 AM"],["5:32 AM","5:42 AM"],["5:42 AM","9:42 AM"],
+["9:42 AM","9:52 AM"],["9:52 AM","1:52 PM"],["1:52 PM","2:07 PM"],["2:07 PM","4:07 PM"],
+["4:07 PM","4:12 PM"],["4:12 PM","5:42 PM"],["5:42 PM","5:52 PM"],["5:52 PM","7:12 PM"],
+["7:12 PM","7:27 PM"],["7:27 PM","7:37 PM"],["7:37 PM","7:47 PM"],["7:47 PM","8:47 PM"],
+["8:47 PM","9:00 PM"],["9:00 PM","11:47 PM"],["11:47 PM","11:52 PM"],["11:52 AM","12:00 AM"],
+["12:00 AM","4:00 AM"]
+];
+const $=id=>document.getElementById(id), key='mrf_tracker_v1';
+let data=load(), editing=null, active=null, idle=null, paused=false, pausedAt=0, ticker=null, completedReady=false;
+if(typeof data.wakeTime!=='string')data.wakeTime='';
+if(!Number.isFinite(data.dayGoal))data.dayGoal=40;if(!Number.isFinite(data.dayNumber))data.dayNumber=1;if(!Array.isArray(data.dayHistory))data.dayHistory=[];if(!data.currentDay)data.currentDay=null;
+data.tasks.forEach((t,i)=>{if(schedule[i]){if(t.scheduleStart===undefined)t.scheduleStart=schedule[i][0];if(t.scheduleEnd===undefined)t.scheduleEnd=schedule[i][1];}});
+function load(){try{let x=JSON.parse(localStorage.getItem(key));if(x)return x}catch(e){}return {tasks:defaults.map((x,i)=>({id:i+1,name:x[0],mins:x[1],done:false})),records:[],mission:"90/52 – 38 Days Mission",goal:"₹5 Lakh",missionDate:new Date().toISOString().slice(0,10),wakeTime:'',dayGoal:40,dayNumber:1,dayHistory:[],currentDay:null,active:null,idle:null}}
+function save(){localStorage.setItem(key,JSON.stringify(data))}
+function fmt(ms, hoursAlways=false){let s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return (h>0||hoursAlways?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+function clock(t){return t?new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'—'}
+function duration(m){if(m==null)return 'Stopwatch';let h=Math.floor(m/60),r=m%60;return (h?`${h}h `:'')+(r?`${r}m`:'')||'0m'}
+function renderTasks(){let box=$('tasklist');box.innerHTML='';data.tasks.forEach((t,i)=>{let el=document.createElement('div');el.className='task'+(active?.taskId===t.id?' active':'')+(t.done?' done':'');
+if(t.name==='Backup'){
+ el.innerHTML=`<div class="num">${i+1}</div><div><div class="taskname">Backup</div><div class="meta">Day start · Wake-up time · Scheduled: ${t.scheduleStart||'4:00 AM'}</div></div><div><input class="backup-time" type="time" aria-label="Backup wake-up time" value="${data.currentDay?.wakeTime||data.wakeTime||''}" disabled></div>`;
+
+ box.append(el);return;
+}
+ const isActive=active?.taskId===t.id;
+ const scheduled=t.scheduleStart&&t.scheduleEnd?` · ${t.scheduleStart} – ${t.scheduleEnd}`:'';
+ el.innerHTML=`<div class="num">${t.done?'✓':i+1}</div><div><div class="taskname"></div><div class="meta">${duration(t.mins)}${scheduled} · ${t.done?'COMPLETED':isActive?(completedReady?'Time is up':paused?'Stopped':'In progress'):'Pending'}</div></div><div class="taskbtns"><button class="primary small start" ${t.done?'disabled':''}>${isActive?(paused?'Start':'Stop'):'Start'}</button><button class="small finish-small finish" ${(!isActive||t.done)?'disabled':''}>Finish ✓</button><button class="small edit">Edit</button><button class="small up">↑</button><button class="small down">↓</button></div>`;el.querySelector('.taskname').textContent=t.name;el.querySelector('.start').onclick=()=>{if(t.done)return;if(isActive){if(paused)resumeTask();else if(!completedReady)pauseTask()}else startTask(t)};el.querySelector('.finish').onclick=()=>{if(isActive)recordActive('completed')};el.querySelector('.edit').onclick=()=>openModal(t);el.querySelector('.up').onclick=()=>move(i,-1);el.querySelector('.down').onclick=()=>move(i,1);box.append(el)})}
+function move(i,d){let j=i+d;if(j<0||j>=data.tasks.length)return;[data.tasks[i],data.tasks[j]]=[data.tasks[j],data.tasks[i]];save();renderTasks()}
+function openModal(t=null){editing=t?.id??null;$('modalTitle').textContent=t?'Edit task':'Add task';$('taskName').value=t?.name||'';$('taskHours').value=t?.mins==null?0:Math.floor(t.mins/60);$('taskMinutes').value=t?.mins==null?0:t.mins%60;$('stopwatch').checked=t?.mins==null;$('overlay').style.display='flex'}
+function closeModal(){$('overlay').style.display='none'}
+$('addTask').onclick=()=>openModal();$('cancelModal').onclick=closeModal;
+$('saveTask').onclick=()=>{let name=$('taskName').value.trim();if(!name){alert('Please enter a task name.');return}let mins=$('stopwatch').checked?null:Math.max(0,Number($('taskHours').value||0)*60+Number($('taskMinutes').value||0));if(mins===0&&!$('stopwatch').checked){alert('Enter a duration greater than zero or choose Stopwatch.');return}if(editing!=null){let t=data.tasks.find(x=>x.id===editing);t.name=name;t.mins=mins}else data.tasks.push({id:Date.now(),name,mins,done:false});save();renderTasks();closeModal()};
+function addRecord(r){data.records.unshift(r);save();renderRecords()}
+function elapsedForActive(now=Date.now()){
+  if(!active)return 0;
+  const end=paused?pausedAt:now;
+  return Math.max(0,end-active.startedAt-(active.pausedTotal||0));
+}
+function saveActive(){data.active=active?{...active}:null;data.paused=paused;data.pausedAt=pausedAt||0;save()}
+function recordActive(status){
+  if(!active)return;
+  const now=Date.now(), elapsed=elapsedForActive(now);
+  const planned=active.mins==null?null:active.mins*60000;
+  addRecord({type:'task',name:active.name,taskId:active.taskId,plannedMs:planned,startedAt:active.originalStartedAt||active.startedAt,endedAt:now,actualMs:elapsed,status,date:new Date(active.originalStartedAt||active.startedAt).toLocaleDateString(),dayNumber:data.dayNumber});
+  const t=data.tasks.find(x=>x.id===active.taskId);if(t)t.done=status==='completed';
+  const finishedSleep=status==='completed'&&t&&t.name==='Sleep';
+  active=null;paused=false;pausedAt=0;completedReady=false;data.active=null;data.paused=false;data.pausedAt=0;data.completedReady=false;save();renderTasks();
+  if(finishedSleep&&allRoutineTasksDone())openDayEnd();else if(status==='completed')beginIdle(now);else renderTimer();
+  renderScore();
+}
+function beginIdle(from=Date.now()){if(active||idle)return;idle={startedAt:from,prompted:false};data.idle=idle;save();renderTimer();tick()}
+function promptIdle(){
+  if(!idle||idle.prompted)return;
+  idle.prompted=true;data.idle=idle;save();
+  $('idleDuration').textContent='Time spent: '+fmt(Date.now()-idle.startedAt,true);
+  $('idleReason').value='';
+  $('idleOverlay').style.display='flex';
+  $('idleReason').focus();
+}
+function stopIdle(to=Date.now(),reason=''){
+  if(!idle)return;
+  addRecord({type:'idle',name:'Gap / Personal Time',reason,startedAt:idle.startedAt,endedAt:to,actualMs:to-idle.startedAt,date:new Date(idle.startedAt).toLocaleDateString(),dayNumber:data.dayNumber});
+  idle=null;data.idle=null;save();renderTimer();renderScore();
+}
+function saveShortTransition(to=Date.now()){
+  if(!idle)return;
+  stopIdle(to,'Transition to next task (under 1 minute)');
+}
+function startTask(t){
+  if(!data.currentDay){alert('Pehle Start Day par click karke aaj ka wake-up time enter karein.');return;}
+  unlockAudio();
+  if(active){alert('Please finish or stop the current task before starting another one.');return;}
+  const now=Date.now();
+  if(idle){
+    const gapMs=now-idle.startedAt;
+    if(gapMs<60000){saveShortTransition(now);}
+    else{promptIdle();alert('Pehle batayein ki pichhle time mein aapne kya kiya. Save karne ke baad agla task Start kar sakte hain.');return;}
+  }
+  active={taskId:t.id,name:t.name,mins:t.mins,startedAt:now,originalStartedAt:now,pausedTotal:0,endsAt:t.mins==null?null:now+t.mins*60000};
+  paused=false;pausedAt=0;completedReady=false;saveActive();renderTasks();renderTimer();tick();
+}
+let audioCtx=null;function unlockAudio(){try{const Ctx=window.AudioContext||window.webkitAudioContext;if(Ctx&&!audioCtx)audioCtx=new Ctx();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}catch(e){}}
+function notifyTimeUp(){try{if(audioCtx){[0,0.28,0.56].forEach((delay)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sine';osc.frequency.value=880;gain.gain.setValueAtTime(0.0001,audioCtx.currentTime+delay);gain.gain.exponentialRampToValueAtTime(0.18,audioCtx.currentTime+delay+0.02);gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+delay+0.18);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(audioCtx.currentTime+delay);osc.stop(audioCtx.currentTime+delay+0.2);});}}catch(e){}try{if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('समय पूरा हो गया है। कृपया इस काम को फिनिश करें।');u.lang='hi-IN';u.rate=0.95;speechSynthesis.speak(u);}}catch(e){}}
+function complete(){if(!active||completedReady)return;notifyTimeUp();completedReady=true;paused=false;pausedAt=0;data.completedReady=true;saveActive();clearInterval(ticker);renderTasks();renderTimer();$('status').textContent='TIME IS UP — FINISH THIS TASK';$('footnote').textContent='Your allocated time is over. Press Finish Task to mark this task completed.';}
+function tick(){clearInterval(ticker);ticker=setInterval(()=>{
+  const now=Date.now();
+  if(active&&!paused&&!completedReady&&active.endsAt&&now>=active.endsAt)complete();
+  if(idle&&!idle.prompted&&now-idle.startedAt>=60000)promptIdle();
+  renderTimer();
+},250)}
+function renderTimer(){
+ let panel=$('timerPanel');panel.classList.toggle('idle',!!idle&&!active);panel.classList.toggle('complete',!!completedReady);
+ if(active){
+  $('status').textContent=completedReady?'TIME IS UP — FINISH THIS TASK':paused?'STOPPED — READY TO START':'FOCUS SESSION';$('workname').textContent=active.name;
+  const remaining=active.mins==null?null:Math.max(0,active.endsAt-(paused?pausedAt:Date.now()));
+  $('timer').textContent=active.mins==null?fmt(elapsedForActive(),true):fmt(remaining,active.mins>=60);
+  $('timerlabel').textContent=active.mins==null?'ELAPSED TIME':'TIME REMAINING';$('startTime').textContent=clock(active.originalStartedAt||active.startedAt);
+  $('endTime').textContent=active.endsAt?clock(active.endsAt):'Manual finish';$('finishTask').disabled=false;$('finishTask').style.display='inline-block';$('finishTask').classList.toggle('finish-ready',completedReady);
+  $('pauseTask').style.display=(paused||completedReady)?'none':'inline-block';$('resumeTask').style.display=(paused&&!completedReady)?'inline-block':'none';$('startIdle').style.display='none';$('stopIdle').style.display='none';
+  $('footnote').textContent=completedReady?'Time is complete. Finish this task to mark it done.':paused?'Timer is stopped. Press Start to continue from the same time.':'Stay with this one task.';
+ } else if(idle){
+  const idleMs=Date.now()-idle.startedAt;
+  $('status').textContent='IDLE TIME';$('workname').textContent='Your next task is waiting';$('timer').textContent=fmt(idleMs,true);$('timerlabel').textContent='ELAPSED IDLE TIME';$('startTime').textContent=clock(idle.startedAt);$('endTime').textContent='—';
+  $('finishTask').disabled=true;$('finishTask').style.display='none';$('finishTask').classList.remove('finish-ready');$('pauseTask').style.display='none';$('resumeTask').style.display='none';$('startIdle').style.display='none';$('stopIdle').style.display=idleMs>=60000?'inline-block':'none';$('footnote').textContent=idleMs<60000?'Next task 1 minute ke andar start karein. Agar 1 minute tak koi task start nahi hua, website poochegi ki aapne kya kiya.':'Gap time 1 minute se zyada ho gaya. Activity batakar Save karein, phir next task start karein.';
+ } else {
+  $('status').textContent='READY TO FOCUS';$('workname').textContent='Choose a task from your routine';$('timer').textContent='00:00';$('timerlabel').textContent='TIME REMAINING';$('startTime').textContent='—';$('endTime').textContent='—';
+  $('finishTask').disabled=true;$('finishTask').style.display='none';$('finishTask').classList.remove('finish-ready');$('pauseTask').style.display='none';$('resumeTask').style.display='none';$('startIdle').style.display='inline-block';$('stopIdle').style.display='none';$('footnote').textContent='Focus time is precious. Begin with one task.';
+ }
+}
+$('finishTask').onclick=()=>{if(active)recordActive('completed');};
+function pauseTask(){if(active&&!paused&&!completedReady){paused=true;pausedAt=Date.now();saveActive();renderTasks();renderTimer();clearInterval(ticker);}}
+function resumeTask(){if(active&&paused&&!completedReady){unlockAudio();const now=Date.now();active.pausedTotal=(active.pausedTotal||0)+(now-pausedAt);if(active.endsAt)active.endsAt+=now-pausedAt;paused=false;pausedAt=0;saveActive();renderTasks();renderTimer();tick();}}
+$('pauseTask').onclick=pauseTask;
+$('resumeTask').onclick=resumeTask;
+$('startIdle').onclick=()=>{if(!active&&!idle)beginIdle();};
+$('stopIdle').onclick=()=>{if(idle&&Date.now()-idle.startedAt>=60000)promptIdle();};
+$('cancelIdle').onclick=()=>{if(idle){idle.prompted=false;data.idle=idle;save();}$('idleOverlay').style.display='none';};
+$('saveIdle').onclick=()=>{if(!idle)return;const reason=$('idleReason').value.trim();if(!reason){alert('Please write what you did during this time.');return;}stopIdle(Date.now(),reason);$('idleOverlay').style.display='none';};
+function renderPeriodSummary(){const now=new Date();const monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(now.getDate()-((now.getDay()+6)%7));const monthKey=now.toISOString().slice(0,7);const completed=data.dayHistory||[];const weekCount=completed.filter(d=>d.date&&new Date(d.date+'T12:00:00')>=monday).length;const monthCount=completed.filter(d=>(d.date||'').startsWith(monthKey)).length;$('periodValue').textContent=`${completed.length} days`;$('periodNote').textContent=`This week: ${weekCount} completed · This month: ${monthCount} completed · Goal: ${data.dayGoal||40} days`;}
+function renderRecords(){let box=$('records');box.innerHTML='';if(data.dayHistory?.length){data.dayHistory.forEach(dy=>{let d=document.createElement('div');d.className='record';let left=document.createElement('span');left.textContent=`DAY ${dy.dayNumber} · ${dy.date} · Wake ${dy.wakeTime||'—'} · Sleep ${dy.sleepTime||'—'} · ${dy.records?.length||0} time records`;let right=document.createElement('strong');right.textContent='Completed';d.append(left,right);box.append(d)})}if(!data.records.length&&!data.dayHistory?.length){box.innerHTML='<div class="sub">No records yet. Completed tasks and idle intervals will appear here.</div>';return}data.records.forEach(r=>{let d=document.createElement('div');d.className='record';let left=document.createElement('span');left.textContent=`DAY ${r.dayNumber||'—'} · `+(r.type==='idle'?'GAP · ':'TASK · ')+r.name+' · '+clock(r.startedAt)+' – '+clock(r.endedAt)+(r.reason?' · '+r.reason:'');let right=document.createElement('strong');right.textContent=fmt(r.actualMs,true)+(r.status==='stopped'?' · stopped':'');d.append(left,right);box.append(d)})}
+function renderScore(){
+ const routineTasks=data.tasks.filter(t=>t.name!=='Backup');
+ const allDone=routineTasks.length>0&&routineTasks.every(t=>t.done)&&!!data.wakeTime;
+ const today=new Date().toLocaleDateString();
+ const focused=data.records.filter(r=>r.type==='task'&&r.status==='completed'&&(r.dayNumber===data.dayNumber||(!r.dayNumber&&r.date===today))).reduce((n,r)=>n+(r.actualMs||0),0);
+ const score=Math.min(100,Math.round(focused/(20*60*60*1000)*100));
+ $('scoreValue').textContent=allDone?score+' / 100':'— / 100';
+ $('scoreNote').textContent=allDone?`All routine tasks completed. Focused task time: ${fmt(focused,true)}. Score is calculated against your 20-hour routine.`:`Complete all routine tasks (and enter Backup wake-up time) to reveal your daily score. Current focused time: ${fmt(focused,true)}.`;
+}
+$('resetDay').onclick=()=>{if(!confirm("Reset today's task completion marks? Existing time records will remain saved."))return;data.tasks.forEach(t=>t.done=false);save();renderTasks();renderScore()};
+$('historyJump').onclick=()=>$('history').scrollIntoView({behavior:'smooth'});
+$('exportJson').onclick=()=>download('make-room-for-focus-backup.json',JSON.stringify(data,null,2),'application/json');
+$('exportCsv').onclick=()=>{let rows=[['Type','Name','Start','End','Actual seconds','Status'],...data.records.map(r=>[r.type,r.name,new Date(r.startedAt).toISOString(),new Date(r.endedAt).toISOString(),Math.round(r.actualMs/1000),r.status||''])];download('focus-time-records.csv',rows.map(row=>row.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\n'),'text/csv')};
+function download(n,s,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([s],{type}));a.href=u;a.download=n;a.click();URL.revokeObjectURL(u)}
+$('clearHistory').onclick=()=>{if(confirm('Delete all saved time records?')){data.records=[];save();renderRecords()}};
+$('missionText').value=data.mission||$('missionText').value;$('goal').value=data.goal||$('goal').value;$('missionDate').value=data.missionDate||new Date().toISOString().slice(0,10);$('dayGoal').value=data.dayGoal||40;
+$('editMission').onclick=()=>{['missionText','goal','missionDate','dayGoal'].forEach(id=>$(id).readOnly=false);$('editMission').style.display='none';$('saveMission').style.display='inline-block';$('missionText').focus()};
+$('saveMission').onclick=()=>{data.mission=$('missionText').value;data.goal=$('goal').value;data.missionDate=$('missionDate').value;data.dayGoal=Math.max(1,Number($('dayGoal').value)||40);save();['missionText','goal','missionDate','dayGoal'].forEach(id=>$(id).readOnly=true);renderDayProgress();$('saveMission').style.display='none';$('editMission').style.display='inline-block'};
+
+function allRoutineTasksDone(){return data.tasks.filter(t=>t.name!=='Backup').every(t=>t.done);}
+function renderDayProgress(){const total=data.dayGoal||40,n=data.dayNumber||1;const label=data.currentDay?`DAY ${n} / ${total} · Started ${data.currentDay.wakeTime||'—'}`:`DAY ${n} / ${total} · Not started`; $('dayProgress').textContent=label;$('startDay').textContent=data.currentDay?`Day ${n} Started`:`Start Day ${n}`;$('startDay').disabled=!!data.currentDay||n>total;}
+let dayAction='start';
+function openDayStart(){if(data.currentDay)return;dayAction='start';$('dayModalTitle').textContent=`Start Day ${data.dayNumber}`;$('dayModalNote').textContent='Aaj aap kitne baje jaage?';$('dayTimeLabel').textContent='Wake-up time';$('dayTimeInput').value=new Date().toTimeString().slice(0,5);$('saveDay').textContent='Start Day';$('dayOverlay').style.display='flex';}
+function openDayEnd(){dayAction='end';$('dayModalTitle').textContent=`Complete Day ${data.dayNumber}`;$('dayModalNote').textContent='Aaj aap sone ke liye kitne baje ja rahe hain?';$('dayTimeLabel').textContent='Sleep time';$('dayTimeInput').value=new Date().toTimeString().slice(0,5);$('saveDay').textContent='Save & Create Next Day';$('dayOverlay').style.display='flex';}
+function saveDayAction(){const time=$('dayTimeInput').value;if(!time){alert('Please select a time.');return;}if(dayAction==='start'){data.currentDay={dayNumber:data.dayNumber,wakeTime:time,startedAt:Date.now(),date:new Date().toISOString().slice(0,10)};data.wakeTime=time;save();$('dayOverlay').style.display='none';renderTasks();renderDayProgress();renderPeriodSummary();renderScore();renderTimer();return;}
+ if(!allRoutineTasksDone()){alert('Day complete karne se pehle sabhi routine tasks finish karein.');return;}
+ const completedAt=Date.now();data.dayHistory.unshift({dayNumber:data.dayNumber,date:data.currentDay?.date||new Date().toLocaleDateString(),wakeTime:data.currentDay?.wakeTime||'',sleepTime:time,startedAt:data.currentDay?.startedAt||completedAt,endedAt:completedAt,records:data.records.filter(r=>r.dayNumber===data.dayNumber)});
+ data.currentDay=null;data.dayNumber+=1;data.wakeTime='';data.tasks.forEach(t=>t.done=false);data.active=null;data.idle=null;data.paused=false;data.pausedAt=0;data.completedReady=false;save();$('dayOverlay').style.display='none';renderTasks();renderDayProgress();renderRecords();renderPeriodSummary();renderScore();renderTimer();
+}
+$('startDay').onclick=openDayStart;$('cancelDay').onclick=()=>{$('dayOverlay').style.display='none'};$('saveDay').onclick=saveDayAction;
+
+$('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+// Restore in-progress state after refresh using absolute timestamps.
+if(data.active){active=data.active;paused=!!data.paused;pausedAt=data.pausedAt||0;completedReady=!!data.completedReady;if(active.endsAt&&!paused&&!completedReady&&Date.now()>=active.endsAt)complete();}
+if(data.idle)idle=data.idle;
+renderTasks();renderRecords();renderTimer();renderScore();renderDayProgress();renderPeriodSummary();if(active||idle)tick();
+</script>
+</body></html>
